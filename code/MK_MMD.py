@@ -1,7 +1,6 @@
 # multi-kernel maximum mean discrepancy
 # cao bin, HKUST, China, binjacobcao@gmail.com
 # free to charge for academic communication
-# free to charge for academic communication
 
 import numpy as np
 from cvxopt import solvers, matrix 
@@ -29,8 +28,6 @@ class MKMMD():
         for i in range(kernel_num):
             kernel_list.append(RBF(gamma_list[i],"fixed"))
         self.kernel_list = kernel_list
-
-
 
     def predict(self, Xs, Xt,) :
         '''
@@ -81,7 +78,6 @@ class MKMMD():
         print('the optimal weights are found')
         
         MK_MMD = np.array(η_k) * np.array(beta).reshape(-1,1)
-
         return MK_MMD, np.array(beta)
         
 def funs(Xs, Xt, kernel, MMD = True, h_k_vector = False):
@@ -119,12 +115,10 @@ def funs(Xs, Xt, kernel, MMD = True, h_k_vector = False):
                 h_k = kernel(S_x,S_x_) + kernel(T_x,T_x_) - kernel(S_x,T_x_) - kernel(S_x_,T_x)
                 h_k_vector.append(h_k[0][0])
         h_k_vector = np.array(h_k_vector)
-
     else: 
         h_k_vector = None
         pass
     return MMD, h_k_vector
-
 
 def generate_combinations(n):
     # Cn^2
