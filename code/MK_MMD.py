@@ -8,7 +8,7 @@ from cvxopt import solvers, matrix
 from sklearn.gaussian_process.kernels import  RBF 
 
 class MKMMD():
-    def __init__(self, gamma_list=[1,1,1,1,1], kernel_num = 5):
+    def __init__(self, gamma_list=[1,1/2,1/4,1/8,1/16], kernel_num = 5):
         '''
         Our code is designed for educational purposes, 
         and to make it easier to understand, 
@@ -44,9 +44,11 @@ class MKMMD():
         # two rows above section 2.2 Empirical estimate of the MMD, asymptotic distribution, and test
         h_matrix = [] # 5 * 5 
         for i in range(self.kernel_num):
-            h_k_vector = __fun(Xs, Xt, self.kernel_list[i], MMD = False, h_k_vector = True)
+            _, h_k_vector = funs(Xs, Xt, self.kernel_list[i], MMD = False, h_k_vector = True)
             h_matrix.append(h_k_vector)
         h_matrix = np.vstack(h_matrix)
+        print('h matrix is calculated')
+
         # cal the covariance matrix of h_matrix
         # Eq.(7)
         Q_k = np.cov(h_matrix)
@@ -54,41 +56,49 @@ class MKMMD():
         # vector η_k, Eq.(2)
         η_k = []
         for k in range(self.kernel_num):
-            MMD = __fun(Xs, Xt, self.kernel_list[k], MMD = True, h_k_vector = False)
+            MMD, _ = funs(Xs, Xt, self.kernel_list[k], MMD = True, h_k_vector = False)
             η_k.append(MMD)
+        print('η_k is calculated')
 
         # solve the standard quadratic programming problem 
         # see : https://github.com/Bin-Cao/KMMTransferRegressor/blob/main/KMMTR/KMM.py
         P = 2 * matrix(Q_k + 1e-5 * np.eye(self.kernel_num)) # λm = 1e-5 
         q = matrix(np.zeros((self.kernel_num,1)))
-        G = matrix(np.eye(self.kernel_num))
+        G = matrix(-np.eye(self.kernel_num))
         # A = η_k 
-        A = matrix(η_k)
+        # A = matrix(np.array(η_k).reshape(1,-1))
+        A = matrix(np.ones((1,self.kernel_num)))
         b=matrix(1.)
-        h=matrix(0.)
+        h=matrix(np.zeros((self.kernel_num,1)))
         # P is 5 * 5
         # q is 5 * 1
-        # G is 1 * 5
+        # G is 5 * 5
         # A is 1 * 5
-        # b = 1, h =0
-        solvers.options['show_progress'] = True
+        # b = 1, h = 5*1
+        solvers.options['show_progress'] = False
         sol = solvers.qp(P,q,G,h,A,b)
         beta = sol['x']
+        print('the optimal weights are found')
         
         MK_MMD = np.array(η_k) * np.array(beta).reshape(-1,1)
 
         return MK_MMD, np.array(beta)
         
-def __fun(Xs, Xt, kernel, MMD = True, h_k_vector = False):
+def funs(Xs, Xt, kernel, MMD = True, h_k_vector = False):
     if MMD == True:
         # cal MMD for one rbf kernel
         # Eq.(1) in paper
+        dim = np.array(Xs).ndim
+        Xs = np.array(Xs).reshape(-1,dim)
+        Xt = np.array(Xt).reshape(-1,dim)
         EXX_= kernel(Xs,Xs)
         EYY_= kernel(Xt,Xt)
         EYX_= kernel(Xt,Xs)
         EXY_= kernel(Xs,Xt)
         MMD = np.array(EXX_).mean() + np.array(EYY_).mean() - np.array(EYX_).mean() - np.array(EXY_).mean()
-    else: MMD = None
+    else: 
+        MMD = None
+        pass
 
     if h_k_vector == True:
         # cal vector h_k(x,x',y,y'), contains m**2*n**2 terms
@@ -101,16 +111,20 @@ def __fun(Xs, Xt, kernel, MMD = True, h_k_vector = False):
         combin_nt = generate_combinations(nt)
         h_k_vector = []
         for x in range(len(combin_ns)):
-            for y in range(len(nt)):
-                h_k = kernel(Xs[combin_ns[0]],Xs[combin_ns[1]]) + kernel(Xt[combin_nt[0]],Xt[combin_nt[1]]) 
-                - kernel(Xs[combin_ns[0]],Xt[combin_nt[1]]) - kernel(Xs[combin_ns[1]],Xt[combin_nt[0]])
-                h_k_vector.append(h_k)
+            for y in range(len(combin_nt)):
+                S_x = np.array(Xs[combin_ns[x][0]]).reshape(-1,1) # x
+                S_x_ =  np.array(Xs[combin_ns[x][1]]).reshape(-1,1) # x'
+                T_x =  np.array(Xt[combin_nt[y][0]]).reshape(-1,1) # y
+                T_x_ =  np.array(Xt[combin_nt[y][1]]).reshape(-1,1) # y'
+                h_k = kernel(S_x,S_x_) + kernel(T_x,T_x_) - kernel(S_x,T_x_) - kernel(S_x_,T_x)
+                h_k_vector.append(h_k[0][0])
         h_k_vector = np.array(h_k_vector)
-    else: h_k_vector = None
 
+    else: 
+        h_k_vector = None
+        pass
     return MMD, h_k_vector
 
-    
 
 def generate_combinations(n):
     # Cn^2
