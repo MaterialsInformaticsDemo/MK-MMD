@@ -7,7 +7,7 @@ from cvxopt import solvers, matrix
 from sklearn.gaussian_process.kernels import  RBF 
 
 class MKMMD():
-    def __init__(self, gamma_list=[1,1/2,1/4,1/8,1/16], kernel_num = 5):
+    def __init__(self, gamma_list=[2,1,1/2,1/4,1/8,], kernel_num = 5):
         '''
         Our code is designed for educational purposes, 
         and to make it easier to understand, 
