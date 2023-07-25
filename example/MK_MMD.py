@@ -60,10 +60,10 @@ class MKMMD():
         # solve the standard quadratic programming problem 
         # see : https://github.com/Bin-Cao/KMMTransferRegressor/blob/main/KMMTR/KMM.py
         P = 2 * matrix(Q_k + 1e-5 * np.eye(self.kernel_num)) # λm = 1e-5 
-        q = matrix(np.zeros((self.kernel_num,1)))
+        # q = - η_k ， maximum η_k * beta in QB
+        q = matrix(-np.array(η_k).reshape(-1,1))
         G = matrix(-np.eye(self.kernel_num))
-        # A = η_k 
-        # A = matrix(np.array(η_k).reshape(1,-1))
+        # the summation of the beta is 1, Eq.(3), let's D = 1
         A = matrix(np.ones((1,self.kernel_num)))
         b=matrix(1.)
         h=matrix(np.zeros((self.kernel_num,1)))
@@ -76,8 +76,7 @@ class MKMMD():
         sol = solvers.qp(P,q,G,h,A,b)
         beta = sol['x']
         print('the optimal weights are found')
-        
-        MK_MMD = np.array(η_k) * np.array(beta).reshape(-1,1)
+        MK_MMD = np.array(η_k) @ np.array(beta)
         return MK_MMD, np.array(beta)
         
 def funs(Xs, Xt, kernel, MMD = True, h_k_vector = False):

@@ -24,5 +24,5 @@ random.shuffle(target)
 
 MK_MMD,weights = MKMMD().predict(source, target)
 
-print(MK_MMD)
-print(weights)
+print('MK_MMD : ',MK_MMD)
+print('weights of kernels:',weights)
