@@ -7,7 +7,7 @@ from cvxopt import solvers, matrix
 from sklearn.gaussian_process.kernels import  RBF 
 
 class MKMMD():
-    def __init__(self, gamma_list=[2,1,1/2,1/4,1/8], kernel_num = 5):
+    def __init__(self, gamma_list=[2,1,1/2,1/4,1/8,], kernel_num = 5):
         '''
         Our code is designed for educational purposes, 
         and to make it easier to understand, 
@@ -77,7 +77,12 @@ class MKMMD():
         beta = sol['x']
         print('the optimal weights are found')
         MK_MMD = np.array(η_k) @ np.array(beta)
-        return MK_MMD, np.array(beta)
+
+        kernel = beta[0] *  self.kernel_list[0]
+        for k in range(self.kernel_num - 1):
+            kernel += beta[k+1] * self.kernel_list[k+1]
+            
+        return MK_MMD, np.array(beta), kernel
         
 def funs(Xs, Xt, kernel, MMD = True, h_k_vector = False):
     if MMD == True:

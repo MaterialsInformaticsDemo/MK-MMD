@@ -77,7 +77,12 @@ class MKMMD():
         beta = sol['x']
         print('the optimal weights are found')
         MK_MMD = np.array(η_k) @ np.array(beta)
-        return MK_MMD, np.array(beta)
+
+        kernel = beta[0] *  self.kernel_list[0]
+        for k in range(self.kernel_num - 1):
+            kernel += beta[k+1] * self.kernel_list[k+1]
+            
+        return MK_MMD, np.array(beta), kernel
         
 def funs(Xs, Xt, kernel, MMD = True, h_k_vector = False):
     if MMD == True:

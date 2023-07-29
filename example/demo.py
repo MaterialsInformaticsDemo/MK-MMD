@@ -22,7 +22,8 @@ while len(target) < 20:
 random.shuffle(source) 
 random.shuffle(target)  
 
-MK_MMD,weights = MKMMD().predict(source, target)
+MK_MMD,weights,kernel = MKMMD().predict(source, target)
 
 print('MK_MMD : ',MK_MMD)
 print('weights of kernels:',weights)
+print('the kernel is :',kernel)
